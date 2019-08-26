@@ -1,10 +1,12 @@
 <script src="/login/status"></script>
 <script>
     // 登录拦截 为了让用户没有办法在地址栏输入地址跳转页面
-    if (isLogin) {
+    if (!isLogin) {
+
         location.href = 'login.html';
     }
 </script>
+
 <!DOCTYPE html>
 <html lang="zh-CN">
 
@@ -28,7 +30,7 @@
             <button class="btn btn-default navbar-btn fa fa-bars"></button>
             <ul class="nav navbar-nav navbar-right">
                 <li><a href="profile.html"><i class="fa fa-user"></i>个人中心</a></li>
-                <li><a href="login.html"><i class="fa fa-sign-out"></i>退出</a></li>
+                <li><a href="javascript:;" id="logout"><i class="fa fa-sign-out"></i>退出</a></li>
             </ul>
         </nav>
         <div class="container-fluid">
@@ -150,6 +152,7 @@
     <script>
         NProgress.done()
     </script>
+    <script src="../assets/js/common.js"></script>
 </body>
 
 </html>

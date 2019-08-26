@@ -1,10 +1,12 @@
 <script src="/login/status"></script>
 <script>
     // 登录拦截 为了让用户没有办法在地址栏输入地址跳转页面
-    if (isLogin) {
+    if (!isLogin) {
+        // isNaN 是数字为假  isLogin 登录为假  没有登录真
         location.href = 'login.html';
     }
 </script>
+
 <!DOCTYPE html>
 <html lang="zh-CN">
 
@@ -28,7 +30,7 @@
             <button class="btn btn-default navbar-btn fa fa-bars"></button>
             <ul class="nav navbar-nav navbar-right">
                 <li><a href="profile.html"><i class="fa fa-user"></i>个人中心</a></li>
-                <li><a href="login.html"><i class="fa fa-sign-out"></i>退出</a></li>
+                <li><a href="javascript:;" id="logout"><i class="fa fa-sign-out"></i>退出</a></li>
             </ul>
         </nav>
         <div class="container-fluid">
@@ -41,48 +43,51 @@
       </div> -->
             <div class="row">
                 <div class="col-md-4">
-                    <form>
+                    <form id="userForm">
                         <h2>添加新用户</h2>
                         <div class="form-group">
                             <label>头像</label>
                             <div class="form-group">
                                 <label class="form-image">
-                  <input id="avatar" type="file">
-                  <img src="../assets/img/default.png">
-                  <i class="mask fa fa-upload"></i>
-                </label>
+                                    <input id="avatar" type="file">
+                                    <img src="../assets/img/default.png" id="preview">
+                                    <i class="mask fa fa-upload"></i>
+                                </label>
+                                <!-- 隐藏域 就是用于保存上传图片的路径  -->
+                                <input type="hidden" name="avatar" id="hiddenAvatar">
                             </div>
                         </div>
                         <div class="form-group">
                             <label>邮箱</label>
-                            <input class="form-control" type="email" placeholder="请输入邮箱">
+                            <input class="form-control" type="email" name="email" id="email" placeholder="请输入邮箱">
                         </div>
                         <div class="form-group">
                             <label>昵称</label>
-                            <input class="form-control" type="text" placeholder="请输入昵称">
+                            <input class="form-control" name="nickName" id="nickName" type="text" placeholder="请输入昵称">
                         </div>
                         <div class="form-group">
                             <label>密码</label>
-                            <input class="form-control" type="text" placeholder="请输入密码">
+                            <input class="form-control" name="password" id="password" type="text" placeholder="请输入密码">
                         </div>
                         <div class="form-group">
                             <div class="radio-inline">
-                                <label><input type="radio">未激活</label>
+                                <label><input type="radio" id="no-active" name="status" value="0">未激活</label>
                             </div>
                             <div class="radio-inline">
-                                <label><input type="radio">激活</label>
+                                <label><input type="radio" name="status" id="active" value="1" >激活</label>
                             </div>
                         </div>
                         <div class="form-group">
                             <div class="radio-inline">
-                                <label><input type="radio">超级管理员</label>
+                                <label><input type="radio" name="role" id="admin" value="admin">超级管理员</label>
                             </div>
                             <div class="radio-inline">
-                                <label><input type="radio">普通用户</label>
+                                <label><input type="radio"  name="role" id="normal" value="normal">普通用户</label>
                             </div>
                         </div>
                         <div class="form-group">
-                            <button class="btn btn-primary" type="submit">添加</button>
+                            <button class="btn btn-primary" type="button" id="usersAdd">添加</button>
+                            <button class="btn btn-primary" type="button" id="usersEdit" style="display: none">修改</button>
                         </div>
                     </form>
                 </div>
@@ -104,7 +109,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
+                            <!-- <tr>
                                 <td class="text-center"><input type="checkbox"></td>
                                 <td class="text-center"><img class="avatar" src="../assets/img/default.png"></td>
                                 <td>coder@itcast.cn</td>
@@ -139,7 +144,7 @@
                                     <a href="javascript:;" class="btn btn-default btn-xs">编辑</a>
                                     <a href="javascript:;" class="btn btn-danger btn-xs">删除</a>
                                 </td>
-                            </tr>
+                            </tr> -->
                         </tbody>
                     </table>
                 </div>
@@ -186,8 +191,178 @@
 
     <script src="../assets/vendors/jquery/jquery.js"></script>
     <script src="../assets/vendors/bootstrap/js/bootstrap.js"></script>
+    <script src="../assets/vendors/art-template/template-web.js"></script>
+    <script type="text/html" id="userTpl">
+        {{each list}}
+        <tr>
+            <td class="text-center"><input type="checkbox"></td>
+            <td class="text-center"><img class="avatar" src="{{$value.avatar}}"></td>
+            <td>{{$value.email}}</td>
+            <td>{{$value.nickName}}</td>
+            <td>{{$value.status==1? '激活':'未激活'}}</td>
+            <td>{{$value.role=="admin"? '超级管理员':'普通用户'}}</td>
+            <td class="text-center" data-id="{{$value._id}}">
+                <a href="javascript:;" class="btn btn-default btn-xs" id="edit">编辑</a>
+                <a href="javascript:;" class="btn btn-danger btn-xs">删除</a>
+            </td>
+        </tr>
+        {{/each}}
+    </script>
     <script>
         NProgress.done()
+    </script>
+    <script src="../assets/js/common.js"></script>
+    <script>
+        // 定义一个数组 用来放数据
+        var userArr = [];
+        // 展示页面
+        $.ajax({
+            type: 'get',
+            url: '/users',
+            success: function(res) {
+                userArr = res;
+                render(userArr);
+            }
+        })
+
+        function render(arr) {
+            var html = template('userTpl', {
+                list: arr,
+            })
+            $('tbody').html(html);
+        }
+        // 添加用户
+        // 先做普通表单的提交
+        // 在做用户头像的提交
+        // 一起把数据提交给服务器
+        $('#usersAdd').on('click', function() {
+                // serialize（） 方法 将表单中的数据自动拼接成字符串类型的参数
+                // serializeArray（） 方法 将表单中的数据转换成数组的参数
+                var formData = $('#userForm').serialize()
+                $.ajax({
+                    type: 'post',
+                    url: '/users',
+                    data: formData,
+                    success: function(res) {
+                        userArr.push(res);
+                        render(userArr);
+                        $('#preview').attr('src', "../assets/img/default.png");
+                        $('#usersAdd').show();
+                        $('#usersEdit').hide();
+                        $('#email').val('');
+                        $('#nickName').val('');
+                        $('#active').attr("checked", false);
+                        $('#no-active').attr("checked", false);
+                        $('#admin').attr("checked", false);
+                        $('#normal').attr("checked", false);
+                        $('#password').val("");
+                    },
+                    error: function(res) {
+                        let {
+                            message
+                        } = JSON.parse(res.responseText)
+                        alert(message);
+                    }
+                })
+            })
+            // 完成图片上传功能  在用户选择图片时，就发送ajax请求把图片的上传的服务器
+        $('#avatar').on('change', function() {
+            var formData = new FormData;
+            // console.log(this.files[0]);
+            // 异步上传图片 (二进制)
+            formData.append('avatar', this.files[0]);
+            //发送ajax请求
+            $.ajax({
+                type: 'post',
+                url: '/upload',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    // console.log(response);
+                    // 实现头像预览功能
+                    $('#preview').attr('src', response[0].avatar);
+                    // 将图片的地址添加到表单里面的隐藏域
+                    $('#hiddenAvatar').val(response[0].avatar);
+                }
+            })
+        })
+
+        // 修改用户的功能 
+        var id;
+        $('tbody').on('click', '#edit', function() {
+            id = $(this).parent().attr('data-id');
+            $('#userForm > h2').text('修改用户');
+            // 获取头像 邮箱 昵称 状态 角色
+            //头像
+            let imgSrc = $(this).parents('tr').children().eq(1).children('img').attr('src');
+            // console.log(imgSrc);
+            if (imgSrc) {
+                $('#preview').attr('src', imgSrc);
+                $('#hiddenAvatar').val(imgSrc);
+            } else {
+                $('#preview').attr('src', "../assets/img/default.png");
+                $('#hiddenAvatar').val("../assets/img/default.png");
+            }
+
+            //邮箱
+            $('#email').val($(this).parents('tr').children().eq(2).text());
+            //昵称
+            $('#nickName').val($(this).parents('tr').children().eq(3).text());
+            // 状态
+            let status = $(this).parents('tr').children().eq(4).text();
+            // console.log(status);
+            if (status == "激活") {
+                $('#active').prop('checked', 'checked');
+            } else {
+                $('#no-active').prop('checked', 'checked')
+            }
+            // 角色
+            let role = $(this).parents('tr').children().eq(5).text();
+            // console.log(role);
+            if (role == "超级管理员") {
+                $('#admin').prop('checked', "checked");
+            } else {
+                $('#normal').prop('checked', 'checked');
+            }
+            $('#usersAdd').hide();
+            $('#usersEdit').show();
+        });
+        // 点击修改,完成修改任务
+
+        $('#usersEdit').on('click', function() {
+            var formData = $('#userForm').serialize();
+            // console.log(formData);
+            $.ajax({
+                type: 'put',
+                url: '/users/' + id,
+                data: formData,
+                success: function(res) {
+                    var index = userArr.findIndex(item => item._id == res._id);
+                    userArr[index] = res;
+                    render(userArr);
+                    $('#userForm > h2').text('添加用户');
+                    $('#hiddenAvatar').val("");
+                    $('#preview').attr('src', "../assets/img/default.png");
+                    $('#usersAdd').show();
+                    $('#usersEdit').hide();
+                    $('#email').val('');
+                    $('#nickName').val('');
+                    $('#active').attr("checked", false);
+                    $('#no-active').attr("checked", false);
+                    $('#admin').attr("checked", false);
+                    $('#normal').attr("checked", false);
+
+                }
+            })
+        })
+
+        function render(arr) {
+            var html = template('userTpl', {
+                list: arr,
+            })
+            $('tbody').html(html);
+        }
     </script>
 </body>
 
