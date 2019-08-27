@@ -94,7 +94,7 @@
                 <div class="col-md-8">
                     <div class="page-action">
                         <!-- show when multiple checked -->
-                        <a class="btn btn-danger btn-sm" href="javascript:;" style="display: none">批量删除</a>
+                        <a class="btn btn-danger btn-sm" id="btn-sm" href="javascript:;" style="display: none">批量删除</a>
                     </div>
                     <table class="table table-striped table-bordered table-hover">
                         <thead>
@@ -195,7 +195,7 @@
     <script type="text/html" id="userTpl">
         {{each list}}
         <tr>
-            <td class="text-center"><input type="checkbox"></td>
+            <td class="text-center"><input type="checkbox" data-id="{{$value._id}}"></td>
             <td class="text-center"><img class="avatar" src="{{$value.avatar}}"></td>
             <td>{{$value.email}}</td>
             <td>{{$value.nickName}}</td>
@@ -203,7 +203,7 @@
             <td>{{$value.role=="admin"? '超级管理员':'普通用户'}}</td>
             <td class="text-center" data-id="{{$value._id}}">
                 <a href="javascript:;" class="btn btn-default btn-xs" id="edit">编辑</a>
-                <a href="javascript:;" class="btn btn-danger btn-xs">删除</a>
+                <a href="javascript:;" class="btn btn-danger btn-xs" id="detele">删除</a>
             </td>
         </tr>
         {{/each}}
@@ -236,8 +236,8 @@
         // 在做用户头像的提交
         // 一起把数据提交给服务器
         $('#usersAdd').on('click', function() {
-                // serialize（） 方法 将表单中的数据自动拼接成字符串类型的参数
-                // serializeArray（） 方法 将表单中的数据转换成数组的参数
+                // serialize() 方法 将表单中的数据自动拼接成字符串类型的参数
+                // serializeArray() 方法 将表单中的数据转换成数组的参数
                 var formData = $('#userForm').serialize()
                 $.ajax({
                     type: 'post',
@@ -329,7 +329,6 @@
             $('#usersEdit').show();
         });
         // 点击修改,完成修改任务
-
         $('#usersEdit').on('click', function() {
             var formData = $('#userForm').serialize();
             // console.log(formData);
@@ -363,6 +362,78 @@
             })
             $('tbody').html(html);
         }
+
+        // 点击删除按钮 删除单个
+        $('tbody').on('click', '#detele', function() {
+            id = $(this).parent().attr('data-id');
+            if (window.confirm('你确定要删除吗？')) {
+                $.ajax({
+                    type: 'delete',
+                    url: '/users/' + id,
+                    success: function(res) {
+                        var index = userArr.findIndex(item => item._id == res._id);
+                        userArr.splice(index, 1);
+                        render(userArr);
+                    }
+                })
+            }
+
+        });
+        // 批量删除(当全选被选中时)
+        $('thead input').on('click', function() {
+                // 获取去全选按钮的是否被选中
+                var flag = $('thead input').prop('checked');
+                $('tbody input').prop('checked', flag);
+                if (flag) {
+                    $('#btn-sm').show();
+                } else {
+                    $('#btn-sm').hide();
+                }
+
+            })
+            // 实现一个不选 全选按钮就不选
+        $('tbody').on('click', 'input', function() {
+            if ($('tbody input:checked').length == $('tbody input').length) {
+                $('thead input').prop('checked', true);
+            } else {
+                $('thead input').prop('checked', false);
+            }
+
+
+            // 被选中的个数大于1 批量删除显示 
+            if ($('tbody input:checked').length > 1) {
+
+                $('#btn-sm').show();
+            } else {
+                $('#btn-sm').hide();
+            }
+        });
+
+        // 给批量注册事件
+
+        $('#btn-sm').on('click', function() {
+            var ids = [];
+            var checkUser = $('tbody input:checked'); // 数组
+            $.each(checkUser, function(index, item) {
+                var id = item.getAttribute('data-id');
+                ids.push(id);
+            })
+
+            // 发送请求
+            $.ajax({
+                type: 'delete',
+                url: '/users/' + ids.join('-'),
+                success: function(res) {
+                    // console.log(res);
+                    res.forEach(function(itemData, index) {
+                        var index = userArr.findIndex(item => item._id == itemData._id);
+                        userArr.splice(index, 1);
+                        render(userArr);
+                    })
+                }
+            })
+
+        })
     </script>
 </body>
 
