@@ -1,5 +1,13 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+<script src="/login/status"></script>
+<script>
+    // 登录拦截 为了让用户没有办法在地址栏输入地址跳转页面
+
+    if (!isLogin) {
+        location.href = 'login.html';
+    }
+</script>
 
 <head>
     <meta charset="UTF-8">

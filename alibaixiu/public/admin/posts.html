@@ -45,7 +45,7 @@
                     <select name="category" class="form-control input-sm" id="category">
                         <option value="all">所有分类</option>
                     </select>
-                    <select name="state" class="form-control input-sm">
+                    <select name="state" class="form-control input-sm" id="state">
                         <option value="all">所有状态</option>
                         <option value="0">草稿</option>
                         <option value="1">已发布</option>
@@ -163,7 +163,7 @@
             <td class="text-center">{{$value.state==1?'已发布':'草稿'}}</td>
             <td class="text-center">
                 <a href="post-add.html?id={{$value._id}}" class="btn btn-default btn-xs" id="edit">编辑</a>
-                <a href="javascript:;" class="btn btn-danger btn-xs">删除</a>
+                <a href="javascript:;" class="btn btn-danger btn-xs del" data-id="{{$value._id}}">删除</a>
             </td>
         </tr>
         {{/each}}
@@ -220,6 +220,7 @@
                 },
                 success: function(res) {
                     // console.log(res);
+                    window.currentPage = res.page;
                     // 渲染分页
                     var html = template('pageTpl', res);
                     $('.pagination').html(html);
@@ -252,6 +253,7 @@
         $('.btn-sm').on('click', function() {
             category = $('#category').val();
             state = $('#state').val();
+            // console.log(state);
             render(category, state);
             // 进行渲染
             // $.ajax({
@@ -271,6 +273,33 @@
             // // $('tbody').html(html);
             // }
             // })
+        })
+
+        // 实现删除功能
+        $('tbody').on('click', '.del', function() {
+            var id = $(this).attr('data-id');
+            // console.log(id);
+            if (window.confirm('你确定要删除吗？')) {
+                $.ajax({
+                    type: 'delete',
+                    url: '/posts/' + id,
+                    success: function(res) {
+                        // console.log(res);
+                        // console.log(currentPage);
+                        if ($('tbody').children().length == 1) {
+                            if (currentPage == 1) {
+                                render(category, state, currentPage);
+                            } else {
+                                render(category, state, currentPage - 1);
+                            }
+                        } else {
+                            render(category, state, currentPage);
+                        }
+
+                    }
+                })
+            }
+
         })
     </script>
 

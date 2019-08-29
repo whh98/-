@@ -1,5 +1,13 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+<script src="/login/status"></script>
+<script>
+    // 登录拦截 为了让用户没有办法在地址栏输入地址跳转页面
+
+    if (!isLogin) {
+        location.href = 'login.html';
+    }
+</script>
 
 <head>
     <meta charset="UTF-8">
@@ -233,6 +241,16 @@
             <p>© 2016 XIU主题演示 本站主题由 themebetter 提供</p>
         </div>
     </div>
+    <script src="./assets/vendors/jquery/jquery.min.js"></script>
+    <script>
+        $.ajax({
+            type: 'get',
+            url: '/settings',
+            success: function(res) {
+                console.log(res);
+            }
+        })
+    </script>
 </body>
 
 </html>
