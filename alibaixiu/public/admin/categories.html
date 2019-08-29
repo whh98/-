@@ -40,16 +40,16 @@
         <strong>错误！</strong>发生XXX错误
       </div> -->
             <div class="row">
-                <div class="col-md-4">
-                    <form>
+                <div class="col-md-4" id="modifyPage">
+                    <form id="listForm">
                         <h2>添加分类</h2>
                         <div class="form-group">
                             <label>名称</label>
-                            <input class="form-control" type="text" placeholder="请输入分类名称">
+                            <input class="form-control" type="text" id="title" name="title" placeholder="请输入分类名称">
                         </div>
                         <div class="form-group">
                             <label>图标</label>
-                            <input class="form-control" type="text" placeholder="请输入分类图标类名">
+                            <input class="form-control" type="text" id="iconName" name="className" placeholder="请输入分类图标类名">
                         </div>
                         <div class="form-group">
                             <button class="btn btn-primary" type="submit">添加</button>
@@ -57,27 +57,28 @@
                     </form>
                 </div>
                 <div class="col-md-8">
-                    <!-- <div class="page-action">
-            <a class="btn btn-danger btn-sm" href="javascript:;">批量删除</a>
-          </div> -->
+                    <div class="page-action">
+                        <a class="btn btn-danger btn-sm" href="javascript:;" style="display: none">批量删除</a>
+                    </div>
                     <table class="table table-striped table-bordered table-hover">
                         <thead>
                             <tr>
                                 <th class="text-center" width="40"><input type="checkbox"></th>
                                 <th>名称</th>
+                                <th>图标名称</th>
                                 <th class="text-center" width="100">操作</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
+                            <!-- <tr>
                                 <td class="text-center"><input type="checkbox"></td>
                                 <td>奇趣事</td>
                                 <td class="text-center">
                                     <a href="javascript:;" class="btn btn-info btn-xs">编辑</a>
                                     <a href="javascript:;" class="btn btn-danger btn-xs">删除</a>
                                 </td>
-                            </tr>
-                            <tr>
+                            </tr> -->
+                            <!-- <tr>
                                 <td class="text-center"><input type="checkbox"></td>
                                 <td>潮科技</td>
                                 <td class="text-center">
@@ -92,7 +93,7 @@
                                     <a href="javascript:;" class="btn btn-info btn-xs">编辑</a>
                                     <a href="javascript:;" class="btn btn-danger btn-xs">删除</a>
                                 </td>
-                            </tr>
+                            </tr> -->
                         </tbody>
                     </table>
                 </div>
@@ -142,6 +143,162 @@
         NProgress.done()
     </script>
     <script src="../assets/js/common.js"></script>
+    <script src="../assets/vendors/art-template/template-web.js"></script>
+    <!-- 展示页面的模板 -->
+    <script type="text/html" id="listTpl">
+        {{each list}}
+        <tr>
+            <td class="text-center" data-id="{{$value._id}}"><input type="checkbox"></td>
+            <td>{{$value.title}}</td>
+            <td>{{$value.className}}</td>
+            <td class="text-center" data-id="{{$value._id}}">
+                <a href="javascript:;" class="btn btn-info btn-xs" id="edit">编辑</a>
+                <a href="javascript:;" class="btn btn-danger btn-xs" id="del">删除</a>
+            </td>
+        </tr>
+        {{/each}}
+    </script>
+    <!-- 编辑页面的修改的模板 -->
+    <script type="text/html" id="editTpl">
+        <form id="editForm">
+            <h2>修改分类</h2>
+            <div class="form-group">
+                <label>名称</label>
+                <input class="form-control" value="{{title}}" type="text" id="title" name="title" placeholder="请输入分类名称">
+            </div>
+            <div class="form-group">
+                <label>图标</label>
+                <input class="form-control" value="{{className}}" type="text" id="iconName" name="className" placeholder="请输入分类图标类名">
+            </div>
+            <div class="form-group">
+                <button class="btn btn-primary" type="submit">修改</button>
+            </div>
+        </form>
+    </script>
+    <script>
+        // 展示分类列表
+        var listArr = [];
+        $.ajax({
+            type: 'GET',
+            url: '/categories',
+            success: function(res) {
+                listArr = res;
+                render(listArr);
+            }
+        })
+
+        function render(arr) {
+            var html = template('listTpl', {
+                list: arr,
+            })
+            $('tbody').html(html);
+        }
+        // 添加分类
+        $('#listForm').on('submit', function() {
+            var formData = $(this).serialize();
+            $.ajax({
+                type: 'post',
+                url: '/categories',
+                data: formData,
+                success: function(res) {
+                    listArr.push(res);
+                    render(listArr);
+                    $('#title').val('');
+                    $('#iconName').val('');
+                }
+
+            })
+            return false;
+        });
+        //点击编辑按钮
+        var id;
+        $('tbody').on('click', '#edit', function() {
+            id = $(this).parent().attr('data-id');
+            $.ajax({
+                type: 'put',
+                url: '/categories/' + id,
+                success: function(response) {
+                    var html = template('editTpl',
+                        response
+                    )
+                    $('#modifyPage').html(html);
+                }
+            })
+        });
+        $('#modifyPage').on('submit', '#editForm', function() {
+            var formData = $(this).serialize();
+            $.ajax({
+                type: 'put',
+                url: '/categories/' + id,
+                data: formData,
+                success: function(res) {
+                    var index = listArr.findIndex(item => item._id == res._id);
+                    listArr[index] = res;
+                    render(listArr);
+                }
+            })
+            return false;
+        })
+
+        //删除按钮(单个删除)
+        $('tbody').on('click', '#del', function() {
+            id = $(this).parent().attr('data-id');
+            $.ajax({
+                type: 'delete',
+                url: '/categories/' + id,
+                success: function(res) {
+                    var index = listArr.findIndex(item => item._id == res._id);
+                    listArr.splice(index, 1);
+                    render(listArr);
+                }
+            })
+        });
+        // 全选
+        $('thead input').on('click', function() {
+            var flag = $('thead input').prop('checked');
+            $('tbody input').prop('checked', flag);
+            if (flag) {
+                $('.btn-sm').show();
+            } else {
+                $('.btn-sm').hide();
+            }
+        });
+        // 当有一个不被选中时，$('thead input')不被选中
+        $('tbody').on('click', 'input', function() {
+                if ($('tbody input:checked').length == $('tbody input').length) {
+                    $('thead input').prop('checked', true);
+                } else {
+                    $('thead input').prop('checked', false);
+                }
+
+                if ($('tbody input:checked').length > 1) {
+                    $('.btn-sm').show();
+                } else {
+                    $('.btn-sm').hide();
+                }
+            })
+            // 批量删除
+        var ids = [];
+        $('.btn-sm').on('click', function() {
+            var checkUsers = $('tbody input:checked');
+            checkUsers.each(function(index, item) {
+                id = $(item).parent().attr('data-id');
+                ids.push(id);
+            })
+            $.ajax({
+                type: 'delete',
+                url: '/categories/' + ids.join('-'),
+                success: function(res) {
+                    $(res).each(function(index, item) {
+                        var index = listArr.findIndex(data => data._id == item._id);
+                        listArr.splice(index, 1);
+                        render(listArr)
+                    })
+                }
+            })
+
+        })
+    </script>
 </body>
 
 </html>
