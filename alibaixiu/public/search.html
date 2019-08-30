@@ -10,10 +10,10 @@
         }
         return -1;
     }
-
-    var cid = getUrlParams('categoryId');
+    var key = getUrlParams('key');
+    var cid = getUrlParams('id');
     // console.log(cid);
-    if (cid == -1) {
+    if (key == -1) {
         location.href = 'index.html';
     }
 </script>
@@ -348,33 +348,30 @@
 
         //阿里百秀导航
         $.ajax({
-            type: 'get',
-            url: '/categories',
-            success: function(res) {
-                // console.log(res);
-                var temp = `
+                type: 'get',
+                url: '/categories',
+                success: function(res) {
+                    // console.log(res);
+                    var temp = `
                     {{each data}}
                     <li>
                     <a href="list.html?categoryId={{$value._id}}">
                     <i class="fa {{$value.className}}"></i>{{$value.title}}</a>
                     </li>
                     {{/each}}`;
-                var html = template.render(temp, {
-                        data: res,
-                    })
-                    // console.log(html);
-                $('#topnav1').html(html);
-                $('#topnav2').html(html);
-            }
-        })
-
-
-        // lis文章列表
+                    var html = template.render(temp, {
+                            data: res,
+                        })
+                        // console.log(html);
+                    $('#topnav1').html(html);
+                    $('#topnav2').html(html);
+                }
+            })
+            // 搜索关键字
         $.ajax({
             type: 'get',
-            url: '/posts/category/' + cid,
+            url: '/posts/search/' + key,
             success: function(res) {
-                // console.log(res);
                 var html = template('listTpl', {
                     data: res,
                 })

@@ -352,7 +352,7 @@
             <div class="entry">
                 <div class="head">
                     <span class="sort">{{$value.category.title}}</span>
-                    <a href="/detail.html?id={{$value.link}}">{{$value.title}}</a>
+                    <a href="/detail.html?id={{$value._id}}">{{$value.title}}</a>
                 </div>
                 <div class="main">
                     <p class="info">{{$value.author.nickName}} 发表于 {{$value.createAt&&$value.createAt.substr(0,10)}}</p>
@@ -442,6 +442,7 @@
                 type: 'get',
                 url: '/posts/lasted',
                 success: function(res) {
+                    // console.log(res);
                     var html = template('postTpl', {
                         data: res
                     })
@@ -495,6 +496,13 @@
                     $('#topnav1').html(html);
                     $('#topnav2').html(html);
                 }
+            })
+
+            $('.search form').on('submit', function() {
+                var key = $(this).find('.keys').val();
+                console.log(key);
+                location.href = '/search.html?key=' + key;
+                return false;
             })
         </script>
 </body>
